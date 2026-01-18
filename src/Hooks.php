@@ -14,13 +14,38 @@ namespace MediaWiki\Extension\RambutanMode;
 
 use MediaWiki\Hook\ParserFirstCallInitHook;
 use MediaWiki\Hook\BeforePageDisplayHook;
+use MediaWiki\Hook\ParserOptionsRegisterHook;
 use MediaWiki\MediaWikiServices;
+use MediaWiki\User\UserIdentity;
 use Parser;
+use ParserOptions;
 use PPFrame;
 use OutputPage;
 use Skin;
 
-class Hooks implements ParserFirstCallInitHook, BeforePageDisplayHook {
+class Hooks implements ParserFirstCallInitHook, BeforePageDisplayHook, ParserOptionsRegisterHook {
+
+    /**
+     * Register custom parser option for rambutan mode
+     * This allows the parser cache to vary by whether rambutan mode is active
+     */
+    public function onParserOptionsRegister( &$defaults, &$inCacheKey, &$lazyLoad ) {
+        // Default value is false (off)
+        $defaults['rambutanmode'] = false;
+
+        // Include in cache key - pages will be cached separately for rambutan on/off
+        $inCacheKey['rambutanmode'] = true;
+
+        // Lazy load the value from user preferences
+        $lazyLoad['rambutanmode'] = static function ( ParserOptions $popt ) {
+            $user = $popt->getUserIdentity();
+            if ( !$user || !$user->isRegistered() ) {
+                return false;
+            }
+
+            return self::isRambutanModeActiveForUser( $user );
+        };
+    }
 
     /**
      * Register parser functions
@@ -41,11 +66,10 @@ class Hooks implements ParserFirstCallInitHook, BeforePageDisplayHook {
     }
 
     /**
-     * Check if Rambutan Mode is active for the current user
+     * Check if Rambutan Mode is active for a given user identity
      */
-    public static function isRambutanModeActive( Parser $parser ): bool {
-        $user = $parser->getUserIdentity();
-        if ( !$user || !$user->isRegistered() ) {
+    public static function isRambutanModeActiveForUser( UserIdentity $user ): bool {
+        if ( !$user->isRegistered() ) {
             return false;
         }
 
@@ -77,6 +101,16 @@ class Hooks implements ParserFirstCallInitHook, BeforePageDisplayHook {
         }
 
         return true;
+    }
+
+    /**
+     * Check if Rambutan Mode is active for the current parser context
+     * Uses the registered parser option which integrates with the cache system
+     */
+    public static function isRambutanModeActive( Parser $parser ): bool {
+        // Access the option through ParserOptions - this tells the cache system
+        // that this page's output depends on the rambutanmode option
+        return (bool)$parser->getOptions()->getOption( 'rambutanmode' );
     }
 
     /**

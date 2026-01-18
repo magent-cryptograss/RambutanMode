@@ -25,7 +25,8 @@
 	},
 	"Hooks": {
 		"ParserFirstCallInit": "main",
-		"BeforePageDisplay": "main"
+		"BeforePageDisplay": "main",
+		"ParserOptionsRegister": "main"
 	},
 	"APIModules": {
 		"rambutanmode": "MediaWiki\\Extension\\RambutanMode\\ApiRambutanMode"
