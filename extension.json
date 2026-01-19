@@ -33,7 +33,7 @@
 	},
 	"config": {
 		"RambutanModeControlPage": {
-			"value": "PickiPedia:RambutanMode",
+			"value": "PickiPedia:RambutanModeSetting",
 			"description": "Wiki page that controls Rambutan Mode (content 'true' or 'false')"
 		}
 	},
